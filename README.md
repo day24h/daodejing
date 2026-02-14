@@ -27,9 +27,9 @@
 
 ### 下载：
 
-* 在 **Releases** 中下载已经编译的 PDF 文件：
-  * `File-01.pdf` ⟾ `老子道德经：四种原文表.pdf`。
-  * `File-02.pdf` ⟾ `代码说明.pdf`。
+在 **Releases** 中下载已经编译的 PDF 文件：
+* `File-01.pdf` ⟾ `老子道德经：四种原文表.pdf`。
+* `File-02.pdf` ⟾ `代码说明.pdf`。
 
 
 ### 编辑、编译 pdf 文件：
