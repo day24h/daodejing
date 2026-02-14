@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>脚本-从代码还原原文</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 0;
+            font-family: sans-serif;
+            background-color: #fcfcfc;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .item {
+            width: 80%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 250px;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+
+        #targetText {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* 重点：美化后的带边框提示语 */
+        .hint {
+            color: #555;
+            font-size: 14px;
+            padding: 8px 25px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 50px; /* 胶囊形状 */
+            margin-bottom: 0px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="hint">💡 在下方粘贴代码，将自动实时还原为原文</div>
+        
+        <textarea id="sourceText" class="item" placeholder="将如 [北大本.typ] 文件里的内容，全选，粘贴至此..."></textarea>
+
+        <textarea id="targetText" class="item" placeholder="还原的原文将实时显示在这里。" readonly></textarea>
+    </div>
+
+    <script>
+        const sourceInput = document.getElementById('sourceText');
+        const targetInput = document.getElementById('targetText');
+
+        sourceInput.addEventListener('input', () => {
+            const { value } = sourceInput;
+            if (value.trim() === "") {
+                targetInput.value = "";
+                return;
+            }
+            targetInput.value = processContent(value);
+        });
+
+        function processContent(typstCode) {
+        
+            const noBrackets = typstCode.replace(/\[([^\]]*)\]\[[^\]]*\]\[[^\]]*\]\[([^\]]*)\]/g, '$1$2');
+            const matches = noBrackets.match(/"(.*?)"/g) || [];
+            const unquotedMatches = matches.map(m => m.slice(1, -1));
+            const needsTitle = !unquotedMatches.join("").includes("〚L");
+
+            const chaptersOrdered = unquotedMatches.map(chapterStr => {
+                const units = chapterStr.split("&");
+                let processedChapter = [];
+                let sortArray = [];
+                let isSorting = false;
+
+                for (const unit of units) {
+                    if (unit === "▩") {
+                        isSorting = true;
+                        continue;
+                    } 
+                    if (unit === "▦") {
+                        isSorting = false;
+                        sortArray.sort((a, b) => a[0].localeCompare(b[0]));
+                        processedChapter.push(sortArray.map(([letter, ...content]) => content.join("")).join(""));
+                        sortArray = [];
+                        continue;
+                    }
+                    if (isSorting) {
+                        if (unit !== "" && "🅰🅱🅲🅳🅴".includes(unit)) {
+                            sortArray.push([unit]); 
+                        } else if (sortArray.length > 0) {
+                            sortArray[sortArray.length - 1].push(unit);
+                        }
+                    } else {
+                        processedChapter.push(unit);
+                    }
+                }
+                return processedChapter;
+            });
+
+            if (needsTitle) {
+                return chaptersOrdered
+                    .map(([id, version, ...body]) => `${id}\n${body.join("")}\n`)
+                    .join("");
+            } else {
+                const oneLine = chaptersOrdered
+                    .map(([id, version, ...body]) => body.join(""))
+                    .join("")
+                    .replace(/\n/g, "");
+                return oneLine.replace(/〚L.*?〛/g, '$&\n');
+            }
+        }
+    </script>
+</body>
+</html>
