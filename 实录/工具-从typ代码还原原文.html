@@ -17,9 +17,7 @@
 
     <div class="container">
         <div class="hint">💡 在下方粘贴包含原文的Typst代码，将自动实时还原为原文</div>
-        
         <textarea id="sourceText" class="item" placeholder="将如 [北大本.typ] 文件里的内容，全选，粘贴至此..."></textarea>
-
         <textarea id="targetText" class="item" placeholder="还原的原文将实时显示在这里。" readonly></textarea>
     </div>
 
@@ -35,57 +33,88 @@
             }
             targetInput.value = processContent(value);
         });
-
-        function processContent(typstCode) {
+    /**
+     * 处理 Typst 代码内容的核心函数
+     * @param {string} typstCode 原始输入的字符串
+     */
+    function processContent(typstCode) {
         
-            const noBrackets = typstCode.replace(/\[([^\]]*)\]\[[^\]]*\]\[[^\]]*\]\[([^\]]*)\]/g, '$1$2');
-            const matches = noBrackets.match(/"(.*?)"/g) || [];
-            const unquotedMatches = matches.map(m => m.slice(1, -1));
-            const needsTitle = !unquotedMatches.join("").includes("〚L");
+        // 1. 清理特定格式的方括号内容
+        // 正则解释：匹配形如 [A][B][C][D] 的四连方括号结构，
+        // 只保留第 1 个和第 4 个括号里的内容（$1$2），删掉中间两个括号及其内容。
+        const noBrackets = typstCode.replace(/\[([^\]]*)\]\[[^\]]*\]\[[^\]]*\]\[([^\]]*)\]/g, '$1$2');
 
-            const chaptersOrdered = unquotedMatches.map(chapterStr => {
-                const units = chapterStr.split("&");
-                let processedChapter = [];
-                let sortArray = [];
-                let isSorting = false;
+        // 2. 提取双引号内的内容
+        // 将所有被双引号""包裹的部分提取出来存入数组。
+        const matches = noBrackets.match(/"(.*?)"/g) || [];
+        const unquotedMatches = matches.map(m => m.slice(1, -1)); // 去掉引号，提取纯文本
 
-                for (const unit of units) {
-                    if (unit === "▩") {
-                        isSorting = true;
-                        continue;
-                    } 
-                    if (unit === "▦") {
-                        isSorting = false;
-                        sortArray.sort((a, b) => a[0].localeCompare(b[0]));
-                        processedChapter.push(sortArray.map(([letter, ...content]) => content.join("")).join(""));
-                        sortArray = [];
-                        continue;
-                    }
-                    if (isSorting) {
-                        if (unit !== "" && "🅰🅱🅲🅳🅴".includes(unit)) {
-                            sortArray.push([unit]); 
-                        } else if (sortArray.length > 0) {
-                            sortArray[sortArray.length - 1].push(unit);
-                        }
-                    } else {
-                        processedChapter.push(unit);
-                    }
+        // 3. 确定渲染模式
+        // 检查提取出的所有文本中是否包含“〚L”标记。
+        // 如果没有这个标记，则判定为输出带标题的模式 (needsTitle)。
+        const needsTitle = !unquotedMatches.join("").includes("〚L");
+
+        // 4. 核心处理循环：处理每一个由引号提取出的段落（章/节）
+        const chaptersOrdered = unquotedMatches.map(chapterStr => {
+            const units = chapterStr.split("&"); // 使用 & 符号切割成不同的单元
+            let processedChapter = []; // 存储处理后的段落内容
+            let sortArray = [];        // 排序暂存区
+            let isSorting = false;     // 是否处于排序模式的开关
+
+            for (const unit of units) {
+                // 模式开关：遇到“▩”符号，开启排序模式
+                if (unit === "▩") {
+                    isSorting = true;
+                    continue;
+                } 
+                // 模式开关：遇到“▦”符号，关闭排序模式并执行排序逻辑
+                if (unit === "▦") {
+                    isSorting = false;
+                    // 按字母图标（🅰, 🅱...）的本地顺序对暂存区进行排序
+                    sortArray.sort((a, b) => a[0].localeCompare(b[0]));
+                    // 排序完成后，提取内容部分（去掉字母标签）并合并，存入结果数组
+                    processedChapter.push(sortArray.map(([letter, ...content]) => content.join("")).join(""));
+                    sortArray = []; // 清空暂存区
+                    continue;
                 }
-                return processedChapter;
-            });
 
-            if (needsTitle) {
-                return chaptersOrdered
-                    .map(([id, version, ...body]) => `${id}\n${body.join("")}\n`)
-                    .join("");
-            } else {
-                const oneLine = chaptersOrdered
-                    .map(([id, version, ...body]) => body.join(""))
-                    .join("")
-                    .replace(/\n/g, "");
-                return oneLine.replace(/〚L.*?〛/g, '$&\n');
+                if (isSorting) {
+                    // 如果在排序模式内：
+                    // 如果当前单元是字母图标，则在 sortArray 中开启一个新组
+                    if (unit !== "" && "🅰🅱🅲🅳🅴".includes(unit)) {
+                        sortArray.push([unit]); 
+                    } else if (sortArray.length > 0) {
+                        // 如果是普通文字，则归入当前最后一个字母组中
+                        sortArray[sortArray.length - 1].push(unit);
+                    }
+                } else {
+                    // 如果不在排序模式内，直接将内容存入结果
+                    processedChapter.push(unit);
+                }
             }
+            return processedChapter; // 返回处理（和排序）后的单元数组
+        });
+
+        // 5. 最终组裝与输出格式化
+        if (needsTitle) {
+            // 模式 A：带标题模式
+            // 假设结构为 [ID, 版本, ...正文]，格式化为 "ID\n正文\n"
+            return chaptersOrdered
+                .map(([id, version, ...body]) => `${id}\n${body.join("")}\n`)
+                .join("");
+        } else {
+            // 模式 B：流式模式（无标题）
+            // 先把所有内容压成一行，去掉所有原始换行符
+            const oneLine = chaptersOrdered
+                .map(([id, version, ...body]) => body.join(""))
+                .join("")
+                .replace(/\n/g, "");
+            
+            // 最后在所有的“〚L...〛”标记后面强制加上换行符，实现按标记分行
+            return oneLine.replace(/〚L.*?〛/g, '$&\n');
         }
+    }
+
     </script>
 </body>
 </html>
