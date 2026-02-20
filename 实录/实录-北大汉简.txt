@@ -10,7 +10,7 @@
 *		1. 序列字：〚...〛。如〚⿺辶𦣻〛。
 *		2. 残字：〚F...〛。如〚F之〛、〚F〚⿺辶𦣻〛〛。
 *		3. 行号：〚L...〛。如〚L11〛。
-*	【仓库地址】：https://github.com/momo24h/daodejing
+*	【仓库地址】：https://github.com/day24h/daodejing
 *	【本文件内容使用协议】：CC0：https://creativecommons.org/publicdomain/zero/1.0/
 */
 老子上經〚L2背〛

@@ -7,7 +7,7 @@
 // 用法 show:H字典-显示配置H.字典键 
 #let H字典-显示配置H = (
   
-    "缺省页设置-text-page-par-others": momodoc => {
+    "缺省页设置-text-page-par-others": doc => {
       
       // 指定如下字符的使用字体。
       show regex("[◍▁∟■●〈〉（）]") : it => {
@@ -49,13 +49,13 @@
       // 关闭 "" 在中文环境中自动打印为“”的功能。
       set smartquote(enabled: false)
       
-      momodoc
+      doc
     },
 
-    "说明页设置": momodoc => { momodoc },
-    "表格页设置": momodoc => {
+    "说明页设置": doc => { doc },
+    "表格页设置": doc => {
       // 页面高度自动适应内容，直到遇到pagebreak() 才换页。
       set page(height: auto) 
-      momodoc 
+      doc 
     }
 )

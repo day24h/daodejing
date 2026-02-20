@@ -9,8 +9,8 @@
 
 // 设置 PDF 元数据。
 #set document(
-  title: "老子道德经：四种原文表 v0.1.0",
-  author: "https://github.com/momo24h/daodejing",
+  title: "老子道德经：四种原文表 v0.1.1",
+  author: "https://github.com/day24h/daodejing",
   description: "四种老子道德经原文：王弼本、马王堆帛书本、郭店楚简本、北大汉简本。",
   keywords: ("老子", "道德经", "老子道德经")
 )
@@ -27,7 +27,7 @@
   columns: 1fr,
   [#text("老子道德经", size:72pt, font:"Noto Serif CJK SC")],
   [#h(0.4cm);#text("四种原文表", size:36pt, font:"Noto Sans CJK SC")],
-  [#align(center, text(link("https://github.com/momo24h/daodejing"), size:14pt))]
+  [#align(center, text(link("https://github.com/day24h/daodejing"), size:14pt))]
 ))
 ]
 #pagebreak()

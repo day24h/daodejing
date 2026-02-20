@@ -25,7 +25,7 @@
 #v(4fr)
 #align(center)[
   仓库地址：\
-  #link("https://github.com/momo24h/daodejing")\
+  #link("https://github.com/day24h/daodejing")\
   本文内容及\
   生成本 PDF 的 Typst 格式代码的使用协议：#text("CC0 1.0", font:"DM Mono")\
   #link("https://creativecommons.org/publicdomain/zero/1.0/")\
